@@ -1,5 +1,6 @@
 import os
-from flask import Flask, request, jsonify, send_from_directory, session
+from flask import Flask, request, jsonify, send_from_directory, session, Response
+import json
 from flask_session import Session
 from dotenv import load_dotenv
 from supabase import create_client, Client
@@ -129,6 +130,48 @@ def update_data():
         return jsonify({"status": "success", "message": "Supabase sync complete!"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/supabase-client.js')
+def serve_supabase_client():
+    """Dynamically serve a small Supabase client initializer using env vars.
+    This allows local Flask dev (and simple deploys) to inject keys without
+    editing static files. If keys are missing, the generated file will set
+    the placeholder flag so the frontend falls back safely.
+    """
+    sup_url = os.environ.get('SUPABASE_URL', '')
+    sup_key = os.environ.get('SUPABASE_KEY', '')
+
+    # Safely JSON-encode strings for embedding in JS
+    js_url = json.dumps(sup_url)
+    js_key = json.dumps(sup_key)
+
+    # Determine whether placeholders are present
+    placeholder_flag = 'true' if (not sup_url or not sup_key) else 'false'
+
+    payload = f"""
+// Supabase client initializer (injected by Flask)
+const SUPABASE_URL = {js_url};
+const SUPABASE_ANON_KEY = {js_key};
+
+try {{
+    if (typeof supabase !== 'undefined' && typeof supabase.createClient === 'function') {{
+        window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }} else if (typeof createClient === 'function') {{
+        // some UMD builds expose a global createClient
+        window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }} else {{
+        console.warn('Supabase UMD not found. Make sure the CDN script is included before this file.');
+    }}
+}} catch (e) {{
+    console.warn('Error initializing supabase client:', e);
+}}
+
+// Expose a flag the frontend can check to detect missing configuration
+window.SUPABASE_CONFIG_PLACEHOLDER = {placeholder_flag};
+"""
+
+    return Response(payload, mimetype='application/javascript')
+
 
 @app.route('/<path:path>')
 def send_static(path):

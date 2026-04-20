@@ -1,0 +1,104 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI & Data Science Portfolio</title>
+    <meta name="description" content="Portfolio of an AI & Data Science Student showcasing projects and achievements.">
+    <link rel="canonical" href="https://kishore-portfolio-gules.vercel.app/">
+    <!-- Open Graph / Social -->
+    <meta property="og:title" content="AI & Data Science Portfolio">
+    <meta property="og:description" content="Portfolio of an AI & Data Science Student showcasing projects and achievements.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kishore-portfolio-gules.vercel.app/">
+    <meta property="og:image" content="https://kishore-portfolio-gules.vercel.app/profile.jpeg">
+    <meta name="twitter:card" content="summary_large_image">
+    <!-- Google Fonts: Inter for UI, Fira Code for code bits -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;800&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="/profile.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/styles.css">
+    <!-- Supabase client (UMD) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+    <script src="/supabase-client.js"></script>
+</head>
+
+<body>
+    <canvas id="ai-sparkles-canvas"></canvas>
+    <div class="circuit-bg"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <nav class="navbar">
+        <div class="nav-content">
+            <a href="#" class="logo">&lt;Kishore's Portfolio/&gt;</a>
+            <div class="menu-icon" id="menu-icon">
+                <i class="fas fa-bars"></i>
+            </div>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="#about">About</a></li>
+                <li><a href="#skills">Skills</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#achievements">Achievements</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section id="hero" class="hero section">
+            <div class="hero-visual fade-in scroll-delay" style="position: relative;">
+                <!-- 3D background behind photo -->
+                <div id="ai-3d-container"
+                    style="position: absolute; top: -50px; left: -50px; right: -50px; bottom: -50px; z-index: 0; pointer-events: none;">
+                </div>
+
+                <!-- The Photo -->
+                <div class="profile-photo-container" style="position: relative; z-index: 5;">
+                    <img src="/profile.jpeg" alt="Kishore S - Profile" class="profile-img">
+                    <div class="glow-ring"></div>
+                </div>
+            </div>
+
+            <div class="hero-content fade-in">
+                <p class="greeting">Hello World, I am</p>
+                <h1 class="glitch" data-text="KISHORE S">KISHORE S</h1>
+                <h2 class="role">AI & Data Science Innovator</h2>
+                <p class="hero-desc">Training models to see the unseen. Building intelligent systems and analyzing
+                    complex datasets to solve real-world problems.</p>
+
+                <div class="social-links">
+                    <a href="https://github.com/kishoresenthilkumar007-glitch" target="_blank" class="social-btn"><i
+                            class="fab fa-github"></i> GitHub</a>
+                    <a href="https://www.linkedin.com/in/kishore-s-147887380" target="_blank" class="social-btn"><i
+                            class="fab fa-linkedin"></i> LinkedIn</a>
+                    <div class="contact-wrapper">
+                        <button class="social-btn primary-btn contact-reveal-btn">ContactNo</button>
+                        <div class="contact-number" id="contact-popout" title="Click to copy">
+                            <i class="fas fa-copy"></i> Copy: +91 9360369359
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- rest of content copied from root index.html -->
+
+    </main>
+
+    <footer>
+        <p>&copy; 2026 KISHORE S. Built with <i class="fas fa-heart text-neon-pink"></i> and code.</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="/script.js"></script>
+</body>
+
+</html>

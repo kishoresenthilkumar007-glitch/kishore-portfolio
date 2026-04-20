@@ -1,9 +1,6 @@
-// Supabase client initializer
-// Replace the placeholders below with your values in Vercel environment or during build.
+// Supabase client initializer (public copy)
 const SUPABASE_URL = 'REPLACE_ME_SUPABASE_URL';
 const SUPABASE_ANON_KEY = 'REPLACE_ME_SUPABASE_ANON_KEY';
-
-// Safe feature-detection without referencing possibly-undefined globals
 try {
     const createClientFn = (typeof window !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function')
         ? window.supabase.createClient
@@ -17,6 +14,4 @@ try {
 } catch (e) {
     console.warn('Error initializing supabase client:', e);
 }
-
-// Helper: safe flag to detect placeholder usage
 window.SUPABASE_CONFIG_PLACEHOLDER = (typeof SUPABASE_URL === 'string' && SUPABASE_URL.startsWith('REPLACE_ME')) || (typeof SUPABASE_ANON_KEY === 'string' && SUPABASE_ANON_KEY.startsWith('REPLACE_ME'));

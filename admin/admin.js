@@ -114,10 +114,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // SKILLS
             if (fullJsonData.skills) {
-                    document.getElementById('skills-languages').value = (data.skills.languages || []).join(', ');
-                    document.getElementById('skills-libraries').value = (data.skills.libraries || []).join(', ');
-                    document.getElementById('skills-tools').value = (data.skills.tools || []).join(', ');
-                }
+                document.getElementById('skills-languages').value = (fullJsonData.skills.languages || []).join(', ');
+                document.getElementById('skills-libraries').value = (fullJsonData.skills.libraries || []).join(', ');
+                document.getElementById('skills-tools').value = (fullJsonData.skills.tools || []).join(', ');
+            }
 
                 // PROJECTS
                 projContainer.innerHTML = '';
