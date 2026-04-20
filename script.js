@@ -221,10 +221,25 @@ document.addEventListener('DOMContentLoaded', () => {
         animate();
     }
 
-    // Fetch dynamic data from API
-    fetch('/api/data')
-        .then(response => response.json())
-        .then(data => {
+    // Fetch dynamic data from API (prefer Supabase client if configured)
+    (async () => {
+        try {
+            let data = {};
+            if (window.supabase && !window.SUPABASE_CONFIG_PLACEHOLDER) {
+                const res = await supabase.from('portfolio_settings').select('data').eq('id', 1).single();
+                if (!res.error && res.data) data = res.data.data || res.data;
+                else data = await fetch('/data.json').then(r => r.json()).catch(() => ({}));
+            } else {
+                // Try existing server endpoint first, then fallback to local data
+                try {
+                    const resp = await fetch('/api/data');
+                    data = await resp.json();
+                    if (data && data.error) throw new Error('server error');
+                } catch (e) {
+                    data = await fetch('/data.json').then(r => r.json()).catch(() => ({}));
+                }
+            }
+
             if (data.hero) {
                 const h1 = document.querySelector('.hero-content h1');
                 if (h1) {
@@ -337,8 +352,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     perspective: 1000
                 });
             }
-        })
-        .catch(err => console.error('Error fetching dynamic data:', err));
+        } catch (err) {
+            console.error('Error fetching dynamic data:', err);
+        }
+    })();
 
     // 3D AI Object using Three.js
     const init3DObj = () => {

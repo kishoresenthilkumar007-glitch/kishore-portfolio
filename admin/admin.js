@@ -9,18 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminGrid = document.getElementById('admin-editor-grid');
     const authError = document.getElementById('auth-error');
 
-    // On load: check if server-side session already exists so we don't prompt again
-    fetch('/api/session')
-        .then(res => res.json())
-        .then(data => {
-            if (data && data.logged_in) {
+    // On load: if Supabase client is present, check auth session and auto-login
+    if (window.supabase) {
+        supabase.auth.getSession().then(({ data }) => {
+            if (data && data.session) {
                 loginOverlay.style.display = 'none';
                 adminGrid.style.display = 'grid';
-                // Load data into the editor
                 loadAdminData();
             }
-        })
-        .catch(() => { /* ignore errors - show login overlay by default */ });
+        }).catch(() => {});
+    }
 
     // --- Custom Confirm Modal Utility ---
     function showConfirm(message) {
@@ -72,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- AUTHENTICATION ---
-    authBtn.addEventListener('click', () => {
+    authBtn.addEventListener('click', async () => {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
         
@@ -80,44 +78,42 @@ document.addEventListener('DOMContentLoaded', () => {
         authBtn.disabled = true;
         authError.style.display = 'none';
 
-        fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        })
-        .then(async res => {
-            let data;
-            try { data = await res.json(); } catch(e) {
-                const text = await res.text().catch(() => '');
-                throw new Error(text || 'Backend offline!');
-            }
-            if (!res.ok) throw new Error(data.error || 'Invalid credentials');
-            return data;
-        })
-        .then(data => {
+        try {
+            if (!window.supabase || window.SUPABASE_CONFIG_PLACEHOLDER) throw new Error('Supabase not configured. Update supabase-client.js placeholders or set env variables.');
+            const { data: signData, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
             loginOverlay.style.display = 'none';
             adminGrid.style.display = 'grid';
             loadAdminData();
-        })
-        .catch(err => {
-            authError.innerText = err.message;
+        } catch (err) {
+            authError.innerText = err.message || 'Authentication failed';
             authError.style.display = 'block';
-        })
-        .finally(() => {
+        } finally {
             authBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Authenticate';
             authBtn.disabled = false;
-        });
+        }
     });
 
     // --- LOAD DATA ---
-    function loadAdminData() {
-        fetch('/api/data')
-            .then(res => res.json())
-            .then(data => {
-                fullJsonData = data; 
-                
-                // SKILLS
-                if (data.skills) {
+    async function loadAdminData() {
+        try {
+            // Prefer Supabase if configured
+            if (window.supabase && !window.SUPABASE_CONFIG_PLACEHOLDER) {
+                const res = await supabase.from('portfolio_settings').select('data').eq('id', 1).single();
+                if (!res.error && res.data) {
+                    fullJsonData = res.data.data || res.data;
+                } else {
+                    // fallback to local file
+                    const local = await fetch('/data.json').then(r => r.json()).catch(() => ({}));
+                    fullJsonData = local;
+                }
+            } else {
+                const local = await fetch('/data.json').then(r => r.json()).catch(() => ({}));
+                fullJsonData = local;
+            }
+            
+            // SKILLS
+            if (fullJsonData.skills) {
                     document.getElementById('skills-languages').value = (data.skills.languages || []).join(', ');
                     document.getElementById('skills-libraries').value = (data.skills.libraries || []).join(', ');
                     document.getElementById('skills-tools').value = (data.skills.tools || []).join(', ');
@@ -125,13 +121,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // PROJECTS
                 projContainer.innerHTML = '';
-                (data.projects || []).forEach(proj => createProjectNode(proj));
+                (fullJsonData.projects || []).forEach(proj => createProjectNode(proj));
 
                 // ACHIEVEMENTS
                 achvContainer.innerHTML = '';
-                (data.achievements || []).forEach(ach => createAchievementNode(ach));
-            })
-            .catch(err => console.error("Failed to load data:", err));
+                (fullJsonData.achievements || []).forEach(ach => createAchievementNode(ach));
+        } catch (err) {
+            console.error('Failed to load data:', err);
+        }
     }
 
     // --- UI GENERATORS ---
@@ -277,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- SAVE LOGIC ---
-    saveBtn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', async () => {
         // Build SKILLS
         const skillsLanguages = document.getElementById('skills-languages').value.split(',').map(s => s.trim()).filter(s => s);
         const skillsLibraries = document.getElementById('skills-libraries').value.split(',').map(s => s.trim()).filter(s => s);
@@ -321,33 +318,31 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving to Cloud...';
         saveBtn.disabled = true;
 
-        fetch('/api/data', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(async res => {
-            let data;
-            try {
-                data = await res.json();
-            } catch (parseErr) {
-                const text = await res.text().catch(() => '');
-                throw new Error(text || parseErr.message || 'Invalid server response');
-            }
-            if (!res.ok) throw new Error(data.error || 'Failed to save');
-            return data;
-        })
-        .then(res => {
-            if (res.status === 'success') {
+        try {
+            if (window.supabase && !window.SUPABASE_CONFIG_PLACEHOLDER) {
+                const res = await supabase.from('portfolio_settings').upsert({ id: 1, data: payload });
+                if (res.error) throw res.error;
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 3000);
+            } else {
+                // Fallback to existing Flask endpoint if available
+                const resp = await fetch('/api/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                let parsed;
+                try { parsed = await resp.json(); } catch(_) { parsed = null; }
+                if (!resp.ok) throw new Error(parsed?.error || 'Save failed. Configure Supabase or run Flask backend.');
                 toast.classList.remove('hidden');
                 setTimeout(() => toast.classList.add('hidden'), 3000);
             }
-        })
-        .catch(err => alert('Save failed: ' + err.message))
-        .finally(() => {
+        } catch (err) {
+            alert('Save failed: ' + (err.message || err));
+        } finally {
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
-        });
+        }
     });
 
     // --- TAB SWITCHING LOGIC ---
