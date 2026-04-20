@@ -13,6 +13,7 @@
         rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="../profile.ico" type="image/x-icon">
     <link rel="stylesheet" href="../styles.css?v=5"> <!-- Base styles -->
     <link rel="stylesheet" href="../admin/admin.css?v=5"> <!-- Admin specific styles -->
 </head>
@@ -114,6 +115,17 @@
     </main>
 
     <script src="../admin/admin.js?v=6"></script>
+    <!-- Custom Confirm Modal for delete actions -->
+    <div id="confirm-modal" class="confirm-modal hidden">
+        <div class="confirm-backdrop"></div>
+        <div class="confirm-dialog glass-card">
+            <p id="confirm-message" style="margin-bottom:1rem; font-size:1.05rem;">Are you sure?</p>
+            <div class="confirm-actions">
+                <button id="confirm-cancel" class="social-btn">Cancel</button>
+                <button id="confirm-ok" class="social-btn primary-btn">Delete</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

@@ -30,6 +30,15 @@ try:
 except Exception as e:
     print(f"Failed to boot database connection: {e}")
 
+# Load local fallback data from data.json if present
+DEFAULT_DATA = {}
+try:
+    with open('data.json', 'r', encoding='utf-8') as f:
+        import json
+        DEFAULT_DATA = json.load(f)
+except Exception:
+    DEFAULT_DATA = {}
+
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
@@ -41,6 +50,8 @@ def admin():
 @app.route('/api/login', methods=['POST'])
 def login():
     try:
+        if not supabase:
+            return jsonify({"error": "Auth backend not configured. Set SUPABASE_URL and SUPABASE_KEY in .env."}), 500
         credentials = request.json
         res = supabase.auth.sign_in_with_password({
             "email": credentials.get('email'),
@@ -50,9 +61,19 @@ def login():
         session['user_id'] = res.user.id
         session['access_token'] = res.session.access_token
         session['refresh_token'] = res.session.refresh_token
+        # Make the session persistent so the browser retains it across refreshes
+        session.permanent = True
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"error": str(e)}), 401
+
+
+@app.route('/api/session', methods=['GET'])
+def session_status():
+    # Simple endpoint for the frontend to check whether a user session exists
+    if session.get('user_id') and session.get('access_token'):
+        return jsonify({"logged_in": True, "user_id": session.get('user_id')})
+    return jsonify({"logged_in": False})
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
@@ -62,11 +83,16 @@ def logout():
 @app.route('/api/data', methods=['GET'])
 def get_data():
     try:
+        # If Supabase isn't configured, return local fallback data
+        if not supabase:
+            return jsonify(DEFAULT_DATA)
+
         # Public select access (if RLS public SELECT is enabled)
         response = supabase.table('portfolio_settings').select('data').eq('id', 1).execute()
-        if len(response.data) > 0:
+        if hasattr(response, 'data') and response.data and len(response.data) > 0:
             return jsonify(response.data[0]['data'])
-        return jsonify({})
+        # If no DB record exists yet, return local fallback (empty or defaults)
+        return jsonify(DEFAULT_DATA)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -77,15 +103,29 @@ def update_data():
     
     try:
         data = request.json
+        # If Supabase is not configured, persist locally to data.json as a fallback
+        if not supabase:
+            try:
+                import json
+                with open('data.json', 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=4, ensure_ascii=False)
+                # update in-memory fallback
+                global DEFAULT_DATA
+                DEFAULT_DATA = data
+                return jsonify({"status": "success", "message": "Saved to local data.json (no DB configured)."})
+            except Exception as write_err:
+                return jsonify({"error": f"Local save failed: {write_err}"}), 500
+
         # Hydrate the client session to pass strict update RLS policies
-        supabase.auth.set_session(session.get('access_token'), session.get('refresh_token'))
-        
+        if hasattr(supabase, 'auth'):
+            supabase.auth.set_session(session.get('access_token'), session.get('refresh_token'))
+
         # Upsert the JSON cleanly
         supabase.table('portfolio_settings').upsert({
             'id': 1,
             'data': data
         }).execute()
-        
+
         return jsonify({"status": "success", "message": "Supabase sync complete!"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500

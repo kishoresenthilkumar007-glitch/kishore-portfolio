@@ -9,6 +9,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminGrid = document.getElementById('admin-editor-grid');
     const authError = document.getElementById('auth-error');
 
+    // On load: check if server-side session already exists so we don't prompt again
+    fetch('/api/session')
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.logged_in) {
+                loginOverlay.style.display = 'none';
+                adminGrid.style.display = 'grid';
+                // Load data into the editor
+                loadAdminData();
+            }
+        })
+        .catch(() => { /* ignore errors - show login overlay by default */ });
+
+    // --- Custom Confirm Modal Utility ---
+    function showConfirm(message) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('confirm-modal');
+            const msg = document.getElementById('confirm-message');
+            const okBtn = document.getElementById('confirm-ok');
+            const cancelBtn = document.getElementById('confirm-cancel');
+            const backdrop = modal.querySelector('.confirm-backdrop');
+
+            msg.textContent = message;
+            modal.classList.remove('hidden');
+
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                okBtn.removeEventListener('click', onOk);
+                cancelBtn.removeEventListener('click', onCancel);
+                backdrop.removeEventListener('click', onCancel);
+                document.removeEventListener('keydown', onKey);
+            };
+
+            const onOk = () => { cleanup(); resolve(true); };
+            const onCancel = () => { cleanup(); resolve(false); };
+            const onKey = (e) => { if (e.key === 'Escape') onCancel(); };
+
+            okBtn.addEventListener('click', onOk);
+            cancelBtn.addEventListener('click', onCancel);
+            backdrop.addEventListener('click', onCancel);
+            document.addEventListener('keydown', onKey);
+        });
+    }
+
     // Containers
     const projContainer = document.getElementById('projects-container');
     const achvContainer = document.getElementById('achievements-container');
@@ -43,7 +87,10 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(async res => {
             let data;
-            try { data = await res.json(); } catch(e) { throw new Error("Backend offline!"); }
+            try { data = await res.json(); } catch(e) {
+                const text = await res.text().catch(() => '');
+                throw new Error(text || 'Backend offline!');
+            }
             if (!res.ok) throw new Error(data.error || 'Invalid credentials');
             return data;
         })
@@ -153,8 +200,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        div.querySelector('.remove-btn').addEventListener('click', () => {
-            if (confirm("Remove this project permanently?")) {
+        div.querySelector('.remove-btn').addEventListener('click', async () => {
+            const ok = await showConfirm('Remove this project permanently?');
+            if (ok) {
                 div.remove();
                 document.getElementById('save-btn').click();
             }
@@ -218,8 +266,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        div.querySelector('.remove-btn').addEventListener('click', () => {
-            if (confirm("Remove this achievement permanently?")) {
+        div.querySelector('.remove-btn').addEventListener('click', async () => {
+            const ok = await showConfirm('Remove this achievement permanently?');
+            if (ok) {
                 div.remove();
                 document.getElementById('save-btn').click();
             }
@@ -278,7 +327,13 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify(payload)
         })
         .then(async res => {
-            const data = await res.json();
+            let data;
+            try {
+                data = await res.json();
+            } catch (parseErr) {
+                const text = await res.text().catch(() => '');
+                throw new Error(text || parseErr.message || 'Invalid server response');
+            }
             if (!res.ok) throw new Error(data.error || 'Failed to save');
             return data;
         })
