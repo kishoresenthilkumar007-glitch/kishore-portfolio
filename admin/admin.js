@@ -95,6 +95,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function createProjectNode(projData = null) {
         const div = document.createElement('div');
         div.className = 'dynamic-item proj-item';
+        
+        let existingPreview = '';
+        if (projData && projData.image) {
+            const src = projData.image.startsWith('data:') ? projData.image : '/' + projData.image; 
+            existingPreview = `<div class="image-preview-container"><img src="${src}" /></div>`;
+        }
+
         div.innerHTML = `
             <button class="remove-btn" title="Remove Project"><i class="fas fa-times"></i></button>
             <div class="form-group">
@@ -110,15 +117,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="text" class="glass-input p-link" value="${projData ? projData.link : '#'}" placeholder="https://github.com/...">
             </div>
             <div class="form-group">
-                <label>FontAwesome Icon Code</label>
+                <label>FontAwesome Icon Code (Fallback)</label>
                 <input type="text" class="glass-input p-icon" value="${projData ? projData.icon : 'fa-code'}" placeholder="fa-brain">
             </div>
             <div class="form-group">
                 <label>Tech Stack (comma separated)</label>
                 <input type="text" class="glass-input p-tech" value="${projData ? (projData.tech || []).join(', ') : ''}" placeholder="Python, React, SQL">
             </div>
+            <div class="form-group">
+                <label>Project Image Upload</label>
+                <input type="file" class="glass-input p-file" accept="image/*">
+                <input type="hidden" class="p-image-data" value="${projData ? (projData.image || '') : ''}">
+                ${existingPreview}
+            </div>
         `;
-        div.querySelector('.remove-btn').addEventListener('click', () => div.remove());
+
+        // Handle Image Upload Conversion
+        const fileInput = div.querySelector('.p-file');
+        const dataInput = div.querySelector('.p-image-data');
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    dataInput.value = evt.target.result;
+                    let preview = div.querySelector('.image-preview-container');
+                    if (!preview) {
+                        preview = document.createElement('div');
+                        preview.className = 'image-preview-container';
+                        fileInput.parentNode.appendChild(preview);
+                    }
+                    preview.innerHTML = `<img src="${evt.target.result}" />`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        div.querySelector('.remove-btn').addEventListener('click', () => {
+            if (confirm("Remove this project permanently?")) {
+                div.remove();
+                document.getElementById('save-btn').click();
+            }
+        });
         projContainer.appendChild(div);
     }
 
@@ -172,13 +212,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         preview.className = 'image-preview-container';
                         fileInput.parentNode.appendChild(preview);
                     }
-                    preview.innerHTML = \`<img src="\${evt.target.result}" />\`;
+                    preview.innerHTML = `<img src="${evt.target.result}" />`;
                 };
                 reader.readAsDataURL(file);
             }
         });
 
-        div.querySelector('.remove-btn').addEventListener('click', () => div.remove());
+        div.querySelector('.remove-btn').addEventListener('click', () => {
+            if (confirm("Remove this achievement permanently?")) {
+                div.remove();
+                document.getElementById('save-btn').click();
+            }
+        });
         achvContainer.appendChild(div);
     }
 
@@ -196,7 +241,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 description: item.querySelector('.p-desc').value,
                 link: item.querySelector('.p-link').value,
                 icon: item.querySelector('.p-icon').value,
-                tech: item.querySelector('.p-tech').value.split(',').map(s => s.trim()).filter(s => s)
+                tech: item.querySelector('.p-tech').value.split(',').map(s => s.trim()).filter(s => s),
+                image: item.querySelector('.p-image-data').value
             };
         });
 
@@ -246,6 +292,23 @@ document.addEventListener('DOMContentLoaded', () => {
         .finally(() => {
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
+        });
+    });
+
+    // --- TAB SWITCHING LOGIC ---
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active from all
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            
+            // Add active to clicked
+            btn.classList.add('active');
+            const targetId = btn.getAttribute('data-target');
+            document.getElementById(targetId).classList.add('active');
         });
     });
 

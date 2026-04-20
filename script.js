@@ -275,11 +275,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.projects) {
                 const projectsGrid = document.querySelector('.projects-grid');
                 if (projectsGrid) {
-                    projectsGrid.innerHTML = data.projects.map(proj => `
-                    <div class="project-card glass-card">
-                        <div class="project-img placeholder-img">
-                            <i class="fas ${proj.icon} fa-3x"></i>
-                        </div>
+                    projectsGrid.innerHTML = data.projects.map(proj => {
+                        const imageHTML = proj.image 
+                            ? `<img src="${proj.image}" alt="${proj.title}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px 16px 0 0;">`
+                            : `<i class="fas ${proj.icon} fa-3x"></i>`;
+                        
+                        return `
+                        <div class="project-card glass-card">
+                            <div class="project-img ${proj.image ? '' : 'placeholder-img'}">
+                                ${imageHTML}
+                            </div>
                         <div class="project-content">
                             <h3>${proj.title}</h3>
                             <p>${proj.description}</p>
@@ -288,7 +293,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                             <a href="${proj.link}" class="view-btn">View Code <i class="fab fa-github"></i></a>
                         </div>
-                    </div>`).join('');
+                    </div>`; 
+                    }).join('');
                 }
             }
 

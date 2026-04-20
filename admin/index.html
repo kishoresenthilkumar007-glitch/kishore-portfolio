@@ -13,8 +13,8 @@
         rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../styles.css?v=4"> <!-- Base styles -->
-    <link rel="stylesheet" href="../admin/admin.css?v=4"> <!-- Admin specific styles -->
+    <link rel="stylesheet" href="../styles.css?v=5"> <!-- Base styles -->
+    <link rel="stylesheet" href="../admin/admin.css?v=5"> <!-- Admin specific styles -->
 </head>
 
 <body>
@@ -62,10 +62,17 @@
             </div>
         </div>
 
-        <div class="admin-grid" id="admin-editor-grid" style="display: none; grid-template-columns: 1fr; gap: 3rem;">
+        <div id="admin-editor-grid" style="display: none;">
             
+            <!-- TAB BUTTONS -->
+            <div class="admin-tabs">
+                <button class="tab-btn active" data-target="tab-skills">Skills & Tech</button>
+                <button class="tab-btn" data-target="tab-projects">Projects</button>
+                <button class="tab-btn" data-target="tab-achievements">Achievements</button>
+            </div>
+
             <!-- SKILLS -->
-            <div class="editor-section glass-card">
+            <div class="editor-section glass-card tab-content active" id="tab-skills">
                 <h2><i class="fas fa-cogs"></i> Skills & Technologies</h2>
                 <div class="form-group">
                     <label>Programming Languages (comma separated)</label>
@@ -82,7 +89,7 @@
             </div>
 
             <!-- PROJECTS -->
-            <div class="editor-section glass-card">
+            <div class="editor-section glass-card tab-content" id="tab-projects">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h2 style="margin-bottom: 0;"><i class="fas fa-project-diagram"></i> Projects Portfolio</h2>
                     <button id="add-proj-btn" class="social-btn primary-btn" style="padding: 8px 15px; font-size: 0.9rem;"><i class="fas fa-plus"></i> Add Project</button>
@@ -93,7 +100,7 @@
             </div>
 
             <!-- ACHIEVEMENTS -->
-            <div class="editor-section glass-card">
+            <div class="editor-section glass-card tab-content" id="tab-achievements">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h2 style="margin-bottom: 0;"><i class="fas fa-trophy"></i> Achievements</h2>
                     <button id="add-achv-btn" class="social-btn primary-btn" style="padding: 8px 15px; font-size: 0.9rem;"><i class="fas fa-plus"></i> Add Cert</button>
@@ -106,7 +113,7 @@
         </div>
     </main>
 
-    <script src="../admin/admin.js?v=4"></script>
+    <script src="../admin/admin.js?v=6"></script>
 </body>
 
 </html>
