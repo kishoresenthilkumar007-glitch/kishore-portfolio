@@ -527,15 +527,27 @@ h3 {
 }
 
 .project-img {
-    height: 200px;
+    /* Allow real images to determine height so they don't get cropped */
     background: linear-gradient(to bottom right, rgba(10, 10, 15, 0.6), rgba(176, 38, 255, 0.1));
-    display: flex;
-    align-items: center;
-    justify-content: center;
     color: var(--neon-purple);
     border-bottom: 1px solid var(--glass-border);
     box-shadow: 0 0 20px rgba(0, 240, 255, 0.7);
     margin-bottom: 10px;
+}
+
+/* When an actual image is present, make it responsive and preserve aspect ratio */
+.project-img img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Preserve the original fixed-height placeholder styling for icon-only cards */
+.project-img.placeholder-img {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .project-content {
